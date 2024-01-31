@@ -1,0 +1,28 @@
+root	sentence	name	weight	firstname	middlename	weight	middleinitial	lastname	paragraph	weight	job
+Name: [gname=name].\n[paragraph]	[gname] works as a [job].	[firstname] [lastname]	3	Bob	[middleinitial].	8	A	Bobsenstein	[sentence] [sentence]	1	carpenter
+	[gname] is so so cool and sexy.	[firstname] [middlename] [lastname]	1	George	Wumpus	1	B	Washington	[sentence] [sentence] [sentence]	2	snorbler
+	[gname] is the best person named [gname] to ever exist.			Steven	Charles	1	C	Schmungleton	[sentence] [sentence] [sentence] [sentence]	3	firefighter
+	[gname] is also known as [gname=name]!			Schmimbly	Holden	1	D	Pibbles	[sentence] [sentence] [sentence] [sentence] [sentence]	2	mailfighter
+					Elizabeth	1	E				policefighter
+							F				
+							G				
+							H				
+							I				
+							J				
+							K				
+							L				
+							M				
+							N				
+							O				
+							P				
+							Q				
+							R				
+							S				
+							T				
+							U				
+							V				
+							W				
+							X				
+							Y				
+							Z				
+							[middleinitial]. [middleinitial]				
