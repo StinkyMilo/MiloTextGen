@@ -1,27 +1,27 @@
-root	weight	lowercase	word
-[lowercase.cap][lowercase][lowercase]	0	a	union
-[word.cap.a.cap]	1	b	onion
-		c	understanding
-		d	country
-		e	European
-		f	Schmunguss
-		g	Skwandler
-		h	Orbius
-		i	
-		j	
-		k	
-		l	
-		m	
-		n	
-		o	
-		p	
-		q	
-		r	
-		s	
-		t	
-		u	
-		v	
-		w	
-		x	
-		y	
-		z	
+root	weight	lowercase	word	verb	plural
+[lowercase.cap][lowercase][lowercase]	0	a	union	game	phenomenon
+[plural.s]	0	b	onion	prefer	octopus
+[word.a]	0	c	understanding	enter	game
+[verb.ed]	1	d	country	confuse	quorum
+		e	European	try	alumnus
+		f	Schmunguss	Schmunguss	schema
+		g	Skwandler	soup	amongus
+		h	Orbius	bounce	
+		i		boing	
+		j			
+		k			
+		l			
+		m			
+		n			
+		o			
+		p			
+		q			
+		r			
+		s			
+		t			
+		u			
+		v			
+		w			
+		x			
+		y			
+		z			

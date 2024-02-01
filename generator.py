@@ -6,9 +6,16 @@ anything in brackets should be a column label
 
 TODO:
 
-[rule.ed] produces past tense of a verb at the end of a produced string
-[rule.ing] produces gerund of verb at the end of a produced string
-[rule.cap] capitalizes the first letter of produced string. All other capitalization left the same
+Might need to download wordnet corpi as needed
+
+[rule.ed] produces past tense of a verb at the end of a produced string (use en.verb.past)
+[rule.ing] produces gerund of verb at the end of a produced string (use en.verb.present_participle)
+[rule.s] produces plural of noun at the end of a produced string (en.verb.plural)
+[rule.er] produces comparative
+[rule.est] produces superlative
+[rule.1p] produces 1st person version of a verb at the end of a produced string
+[rule.2p] produces 2nd person version of a verb at the end of a produced string
+[rule.3p] produces 3rd person version of a verb at the end of a produced string
 
 Shouls have compatibility with csv, tsv, xlsx
 
@@ -19,13 +26,19 @@ Variables:
 [a] references variable a again, exactly how it was generated before.
 
 Commands:
-[rule.a] puts a or an before a noun at the beginning of a produced string
+[rule.a] puts a or an before a noun at the beginning of a produced string (consider using en.article instead)
+[rule.cap] capitalizes the first letter of produced string. All other capitalization left the same
 """
 from random import randint
 import re
 import sys
 import nltk
 from nltk.corpus import cmudict
+from nltk.corpus import words as allwords
+from pattern.en import pluralize, conjugate
+# from pattern.en.wordlist import ACADEMIC, BASIC, PROFANITY, TIME
+
+all_words = set(allwords.words())
 
 items = [i.split("\t") for i in open(sys.argv[1],'r').read().split("\n")]
 items_t = []
@@ -74,14 +87,19 @@ except:
 
 exceptions = {"a":set(),"an":set()}
 
+def first_word(string):
+    if " " not in string:
+        return string
+    return string[:string.index(" ")-1].lower()
+
+def last_word(string):
+    return string.split(" ")[-1]
+
 def a_or_an(string):
+    # en article doesn't work well. Trying this instead
     if len(string)==0:
         return "a"
-    if " " in string:
-        word = string[:string.index(" ")-1].lower()
-    else:
-        word = string.lower()
-    # from https://stackoverflow.com/questions/20336524/verify-correct-use-of-a-and-an-in-english-texts-python
+    word = first_word(string)
     if word in exceptions['a']:
         return 'a'
     if word in exceptions['an']:
@@ -89,8 +107,77 @@ def a_or_an(string):
     pron = pronunciations.get(word)
     if pron is None:
         return "an" if word[0] in {'a','e','i','o','u'} else 'a'
+    # from https://stackoverflow.com/questions/20336524/verify-correct-use-of-a-and-an-in-english-texts-python
     for syllables in pron:
         return "an" if syllables[0][-1].isdigit() else "a"
+    
+def make_plural(string):
+    wordl = string.split(" ")
+    word = wordl[-1].lower()
+    # This library takes forever. I'll manually figure it out.
+    if word in all_words:
+        # TODO Fix like below.
+        wordl[-1] = pluralize(word)
+        return " ".join(wordl)
+    # Adapted from https://www.teachstarter.com/au/teaching-resource/rules-for-plurals-s-es-ies-ves/
+    
+    # [^aeiou](y)$ vowel + y = replace y with ies
+    # (s|ch|sh|x|z)$ = add "es"
+    # fe?$ = replace captured group with ves
+    # otherwise add s
+    # print("Pluralizing fake word",word)
+    ies = re.search(r"[^aeiou](y)$",word)
+    if ies is not None:
+        plural = word[:len(word)-1]+"ies"
+    else:
+        es = re.search(r"(s|ch|sh|x|z)$",word)
+        if es is not None:
+            plural = word + "es"
+        else:
+            ves = re.search(r"fe?$",word)
+            if ves is not None:
+                plural = word[:ves.span(0)]+"ves"
+            else:
+                plural = word+"s"
+    # TODO: Just replace the last word
+    wordl[-1]=plural
+    return " ".join(wordl)
+
+def make_past(string):
+    wordl = string.split(" ")
+    word = wordl[-1].lower()
+    # print("Conjugating",word)
+    if word in all_words:
+        try:
+            p1 = conjugate(word,'1sg')
+            p2 = conjugate(word,'2sg')
+            p3 = conjugate(word,'3sg')
+            pl = conjugate(word,'pl')
+            if word == p1:
+                new_word = conjugate(word,'1sgp')
+            elif word==p2:
+                new_word = conjugate(word,'2sgp')
+            elif word==p3:
+                new_word = conjugate(word,'3sgp')
+            elif word==pl:
+                new_word = conjugate(word,'ppl')
+            wordl[-1]=new_word
+            return " ".join(wordl)
+        except:
+            pass
+    # Adapted from https://www.gingersoftware.com/content/grammar-rules/verbs/the-past-simple-tense
+    if re.match(r"[^aeiou]y$",word):
+        new_word = word[:len(word)-1] + "ied"
+    elif re.match(r"e$",word):
+        new_word = word+"d"
+    elif re.match(r"[^aeiou][aeiou][^aeiouwxy]$",word):
+        # Doesn't work if the stress isn't on the last syllable, but determining stress would be
+        # too much work.
+        new_word = word + word[-1] + "ed"
+    else:
+        new_word = word+"ed"
+    wordl[-1] = new_word
+    return " ".join(wordl)
 
 rule_re = r"\[[^\[\]]*\]"
 def generate_text(variables={},from_rule='root'):
@@ -123,8 +210,12 @@ def generate_text(variables={},from_rule='root'):
         for command in commands:
             if command=="cap" and len(val) > 0:
                 val = val[0].upper() + (val[1:] if len(val)>1 else "")
-            if command=="a":
+            elif command=="a":
                 val = a_or_an(val) + " " + val
+            elif command=="s":
+                val = make_plural(val)
+            elif command=="ed":
+                val = make_past(val)
         text_value = text_value[:span[0]]+val+text_value[span[1]:]
         match = re.search(rule_re,text_value)
         # print(match)
@@ -132,4 +223,5 @@ def generate_text(variables={},from_rule='root'):
     text_value = text_value.replace("\\n","\n")
     return text_value
 
-print(generate_text())
+for i in range(0,100):
+    print(generate_text())
