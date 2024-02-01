@@ -13,6 +13,8 @@ Compatibility with:
     tsv
     xlsx
 
+Make into a class, constructor has a filename. Format inferred from filename
+    
 API:
     function to load from file
     function to generate one item
@@ -47,36 +49,6 @@ from pattern.en import pluralize, conjugate, comparative, superlative
 # from pattern.en.wordlist import ACADEMIC, BASIC, PROFANITY, TIME
 
 all_words = set(allwords.words())
-
-items = [i.split("\t") for i in open(sys.argv[1],'r').read().split("\n")]
-items_t = []
-for i in range(0,len(items)):
-    for j in range(0,len(items[i])):
-        if items[i][j]=='':
-            continue
-        while len(items_t) <= j:
-            items_t.append([])
-        while len(items_t[j]) <= i:
-            items_t[j].append(None)
-        items_t[j][i]=items[i][j]
-items=items_t
-
-# texts, weights, total weight
-grammar = {}
-
-i=0
-while i < len(items):
-    column = items[i]
-    grammar[column[0]]=[column[1:]]
-    if i+1 >= len(items) or items[i+1][0]!='weight':
-        i+=1
-        grammar[column[0]].append([1]*(len(column)-1))
-        grammar[column[0]].append(len(column)-1)
-        continue
-    weight = [int(i) for i in items[i+1][1:] if len(i)>0]
-    grammar[column[0]].append(weight)
-    grammar[column[0]].append(sum(weight))
-    i+=2
 
 def weighted_choice(entry):
     val = randint(0,entry[2]-1)
@@ -294,41 +266,79 @@ def apply_commands(commands,val):
             val = make_person(val,'3')
     return val
 
-rule_re = r"\[[^\[\]]*\]"
-def generate_text(variables={},from_rule='root'):
-    text_value = weighted_choice(grammar[from_rule])
-    # print("Initial value:",text_value)
-    match = re.search(rule_re,text_value)
-    # print(match)
-    while match:
-        match_text = match.group()[1:len(match.group())-1]
-        split_by_equals = match_text.split("=")
-        split_by_dot = match_text.split(".")
-        commands = []
-        if len(split_by_dot)>1:
-            match_text = split_by_dot[0]
-            commands = split_by_dot[1:]
-        span = match.span()
-        val = ""
-        if len(split_by_equals)==1:
-            if match_text in variables:
-                # print("Getting value of variable",match_text)
-                val = apply_commands(commands,variables[match_text])
-            else:
-                # print("Generating text for variable",match_text)
-                val = apply_commands(commands,generate_text(variables,match_text))
-        else:
-            # Declare variable
-            # print("Declaring variable",split_by_equals,"with value determined by rule",split_by_equals[1])
-            val = apply_commands(commands,generate_text(variables,split_by_equals[1].split(".")[0]))
-            variables[split_by_equals[0]]=val
-        
-        text_value = text_value[:span[0]]+val+text_value[span[1]:]
-        match = re.search(rule_re,text_value)
-        # print(match)
-        # print("New Value: " + text_value)
-    text_value = text_value.replace("\\n","\n")
-    return text_value
+class Generator:
+    def __init__(self,filename):
+        items = [i.split("\t") for i in open(filename,'r').read().split("\n")]
+        items_t = []
+        for i in range(0,len(items)):
+            for j in range(0,len(items[i])):
+                if items[i][j]=='':
+                    continue
+                while len(items_t) <= j:
+                    items_t.append([])
+                while len(items_t[j]) <= i:
+                    items_t[j].append(None)
+                items_t[j][i]=items[i][j]
+        self.items=items_t
+        items = items_t
+        # texts, weights, total weight
+        self.grammar = {}
+        i=0
+        while i < len(self.items):
+            column = self.items[i]
+            self.grammar[column[0]]=[column[1:]]
+            if i+1 >= len(self.items) or self.items[i+1][0]!='weight':
+                i+=1
+                self.grammar[column[0]].append([1]*(len(column)-1))
+                self.grammar[column[0]].append(len(column)-1)
+                continue
+            weight = [int(i) for i in items[i+1][1:] if len(i)>0]
+            self.grammar[column[0]].append(weight)
+            self.grammar[column[0]].append(sum(weight))
+            i+=2
+        print(self.grammar)
 
-for i in range(0,100):
-    print(generate_text())
+    # Not working suddenly! Replacements aren't doing what they should
+    def generate(self,variables={},from_rule='root'):
+        text_value = weighted_choice(self.grammar[from_rule])
+        print("Initial value:",text_value)
+        match = re.search(r"\[[^\[\]]*\]",text_value)
+        print(match)
+        while match:
+            match_text = match.group()[1:len(match.group())-1]
+            split_by_equals = match_text.split("=")
+            split_by_dot = match_text.split(".")
+            commands = []
+            if len(split_by_dot)>1:
+                match_text = split_by_dot[0]
+                commands = split_by_dot[1:]
+            span = match.span()
+            val = ""
+            if len(split_by_equals)==1:
+                if match_text in variables:
+                    # print("Getting value of variable",match_text)
+                    val = apply_commands(commands,variables[match_text])
+                else:
+                    # print("Generating text for variable",match_text)
+                    val = apply_commands(commands,self.generate(variables,match_text))
+            else:
+                # Declare variable
+                # print("Declaring variable",split_by_equals,"with value determined by rule",split_by_equals[1])
+                val = apply_commands(commands,self.generate(variables,split_by_equals[1].split(".")[0]))
+                variables[split_by_equals[0]]=val
+            
+            text_value = text_value[:span[0]]+val+text_value[span[1]:]
+            match = re.search(r"\[[^\[\]]*\]",text_value)
+            # print(match)
+            # print("New Value: " + text_value)
+        text_value = text_value.replace("\\n","\n")
+        return text_value
+    
+    def generate_multi(self,num):
+        output = []
+        for i in range(0,num):
+            output.append(self.generate())
+        return output
+
+# gen = Generator("command_test.tsv")
+# print(gen.generate_multi(100))
