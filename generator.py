@@ -6,9 +6,17 @@ anything in brackets should be a column label
 
 TODO:
 
-Might need to download wordnet corpi as needed
+download wordnet corpi as needed
 
-Should have compatibility with csv, tsv, xlsx
+Compatibility with:
+    csv
+    tsv
+    xlsx
+
+API:
+    function to load from file
+    function to generate one item
+    function to generate X items
 
 Completed:
 
