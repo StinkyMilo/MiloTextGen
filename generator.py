@@ -8,18 +8,6 @@ TODO:
 
 download wordnet corpi as needed
 
-Compatibility with:
-    csv
-    tsv
-    xlsx
-
-Make into a class, constructor has a filename. Format inferred from filename
-    
-API:
-    function to load from file
-    function to generate one item
-    function to generate X items
-
 Completed:
 
 Variables:
@@ -38,14 +26,26 @@ Commands:
 [rule.2p] produces 2nd person version of a verb at the end of a produced string
 [rule.3p] produces 3rd person version of a verb at the end of a produced string
 
+Compatibility with:
+    csv
+    tsv
+    xlsx
+
+Make into a class, constructor has a filename. Format inferred from filename
+    
+API:
+    function to load from file
+    function to generate one item
+    function to generate X items
+
 """
 from random import randint
 import re
-import sys
 import nltk
 from nltk.corpus import cmudict
 from nltk.corpus import words as allwords
 from pattern.en import pluralize, conjugate, comparative, superlative
+import openpyxl as opy
 # from pattern.en.wordlist import ACADEMIC, BASIC, PROFANITY, TIME
 
 all_words = set(allwords.words())
@@ -267,20 +267,40 @@ def apply_commands(commands,val):
     return val
 
 class Generator:
-    def __init__(self,filename):
-        items = [i.split("\t") for i in open(filename,'r').read().split("\n")]
-        items_t = []
-        for i in range(0,len(items)):
-            for j in range(0,len(items[i])):
-                if items[i][j]=='':
-                    continue
-                while len(items_t) <= j:
-                    items_t.append([])
-                while len(items_t[j]) <= i:
-                    items_t[j].append(None)
-                items_t[j][i]=items[i][j]
-        self.items=items_t
-        items = items_t
+    def __init__(self,filename,worksheet_name=None):
+        extension = re.search(r"\..*$",filename).group()[1:]
+        if extension == "xlsx" or extension == "xls":
+            items = []
+            workbook = opy.load_workbook(filename)
+            if worksheet_name is None:
+                worksheet = workbook[workbook.sheetnames[0]]
+            else:
+                worksheet = workbook[worksheet_name]
+            for y in range(1,worksheet.max_row+1):
+                items.append([])
+                for x in range(1,worksheet.max_column+1):
+                    cell = worksheet.cell(x,y)
+                    # For now, just convert to string then back to int. Not a big deal.
+                    items[-1].append('' if cell.internal_value is None else str(cell.internal_value))
+            self.items = items
+        else:
+            if extension=="tsv":
+                delimeter = r"\t"
+            elif extension=="csv":
+                delimeter = r","
+            items = [re.split(delimeter,i) for i in open(filename,'r').read().split("\n")]
+            items_t = []
+            for i in range(0,len(items)):
+                for j in range(0,len(items[i])):
+                    if items[i][j]=='':
+                        continue
+                    while len(items_t) <= j:
+                        items_t.append([])
+                    while len(items_t[j]) <= i:
+                        items_t[j].append(None)
+                    items_t[j][i]=items[i][j]
+            self.items=items_t
+            items = items_t
         # texts, weights, total weight
         self.grammar = {}
         i=0
@@ -296,14 +316,14 @@ class Generator:
             self.grammar[column[0]].append(weight)
             self.grammar[column[0]].append(sum(weight))
             i+=2
-        print(self.grammar)
+        # print(self.grammar)
 
     # Not working suddenly! Replacements aren't doing what they should
     def generate(self,variables={},from_rule='root'):
         text_value = weighted_choice(self.grammar[from_rule])
-        print("Initial value:",text_value)
+        # print("Initial value:",text_value)
         match = re.search(r"\[[^\[\]]*\]",text_value)
-        print(match)
+        # print(match)
         while match:
             match_text = match.group()[1:len(match.group())-1]
             split_by_equals = match_text.split("=")
@@ -340,5 +360,5 @@ class Generator:
             output.append(self.generate())
         return output
 
-# gen = Generator("command_test.tsv")
-# print(gen.generate_multi(100))
+gen = Generator("XlsxTest.xlsx")
+print(gen.generate_multi(100))
