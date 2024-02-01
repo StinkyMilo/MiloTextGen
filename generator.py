@@ -8,9 +8,7 @@ TODO:
 
 Might need to download wordnet corpi as needed
 
-[rule.ed] produces past tense of a verb at the end of a produced string (use en.verb.past)
 [rule.ing] produces gerund of verb at the end of a produced string (use en.verb.present_participle)
-[rule.s] produces plural of noun at the end of a produced string (en.verb.plural)
 [rule.er] produces comparative
 [rule.est] produces superlative
 [rule.1p] produces 1st person version of a verb at the end of a produced string
@@ -28,6 +26,8 @@ Variables:
 Commands:
 [rule.a] puts a or an before a noun at the beginning of a produced string (consider using en.article instead)
 [rule.cap] capitalizes the first letter of produced string. All other capitalization left the same
+[rule.ed] produces past tense of a verb at the end of a produced string (use en.verb.past)
+[rule.s] produces plural of noun at the end of a produced string (en.verb.plural)
 """
 from random import randint
 import re
