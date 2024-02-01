@@ -360,5 +360,5 @@ class Generator:
             output.append(self.generate())
         return output
 
-gen = Generator("XlsxTest.xlsx")
-print(gen.generate_multi(100))
+# gen = Generator("XlsxTest.xlsx")
+# print(gen.generate_multi(100))
