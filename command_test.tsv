@@ -1,27 +1,27 @@
-root	weight	lowercase	word	verb	plural
-[lowercase.cap][lowercase][lowercase]	0	a	union	game	phenomenon
-[plural.s]	0	b	onion	prefer	octopus
-[word.a]	0	c	understanding	enter	game
-[verb.ed]	1	d	country	confuse	quorum
-		e	European	try	alumnus
-		f	Schmunguss	Schmunguss	schema
-		g	Skwandler	soup	amongus
-		h	Orbius	bounce	
-		i		boing	
-		j			
-		k			
-		l			
-		m			
-		n			
-		o			
-		p			
-		q			
-		r			
-		s			
-		t			
-		u			
-		v			
-		w			
-		x			
-		y			
-		z			
+root	weight	lowercase	word	verb	plural	adj	nounverb
+[lowercase.cap][lowercase][lowercase]	1	a	union	game	phenomenon	green	[word.a.cap] [verb]
+[plural.s]	1	b	onion	prefer	octopus	BIG	
+[word.a]	1	c	understanding	enTer	game	Epic	
+[verb.ed]	1	d	country	confuse	quorum	good	
+[verb.ing]	1	e	European	try	alumnus	bAd	
+[adj.er]	1	f	Schmunguss	Schmunguss	schema	evil	
+[adj.est]	1	g	Skwandler	soup	amongus	spunglicious	
+I [verb.1p]	1	h	Orbius	bounce		conspicuous	
+You [verb.2p]	1	i		boing		strange	
+He [verb.3p]	1	j		be			
+[nounverb.ing]	1	k					
+[a=verb.ed] [a]	1	l					
+		m					
+		n					
+		o					
+		p					
+		q					
+		r					
+		s					
+		t					
+		u					
+		v					
+		w					
+		x					
+		y					
+		z					

@@ -8,14 +8,7 @@ TODO:
 
 Might need to download wordnet corpi as needed
 
-[rule.ing] produces gerund of verb at the end of a produced string (use en.verb.present_participle)
-[rule.er] produces comparative
-[rule.est] produces superlative
-[rule.1p] produces 1st person version of a verb at the end of a produced string
-[rule.2p] produces 2nd person version of a verb at the end of a produced string
-[rule.3p] produces 3rd person version of a verb at the end of a produced string
-
-Shouls have compatibility with csv, tsv, xlsx
+Should have compatibility with csv, tsv, xlsx
 
 Completed:
 
@@ -28,6 +21,13 @@ Commands:
 [rule.cap] capitalizes the first letter of produced string. All other capitalization left the same
 [rule.ed] produces past tense of a verb at the end of a produced string (use en.verb.past)
 [rule.s] produces plural of noun at the end of a produced string (en.verb.plural)
+[rule.ing] produces gerund of verb at the end of a produced string (use en.verb.present_participle)
+[rule.er] produces comparative
+[rule.est] produces superlative
+[rule.1p] produces 1st person version of a verb at the end of a produced string
+[rule.2p] produces 2nd person version of a verb at the end of a produced string
+[rule.3p] produces 3rd person version of a verb at the end of a produced string
+
 """
 from random import randint
 import re
@@ -35,7 +35,7 @@ import sys
 import nltk
 from nltk.corpus import cmudict
 from nltk.corpus import words as allwords
-from pattern.en import pluralize, conjugate
+from pattern.en import pluralize, conjugate, comparative, superlative
 # from pattern.en.wordlist import ACADEMIC, BASIC, PROFANITY, TIME
 
 all_words = set(allwords.words())
@@ -111,13 +111,26 @@ def a_or_an(string):
     for syllables in pron:
         return "an" if syllables[0][-1].isdigit() else "a"
     
+def match_case(word1,word2):
+    if word1.upper()==word1:
+        return word2.upper()
+    output = ""
+    for i in range(len(word2)):
+        next_char = word2[i]
+        upper = i < len(word1) and word1[i]==word1[i].upper()
+        if upper:
+            output+=next_char.upper()
+        else:
+            output+=next_char.lower()
+    return output
+
 def make_plural(string):
     wordl = string.split(" ")
     word = wordl[-1].lower()
     # This library takes forever. I'll manually figure it out.
     if word in all_words:
         # TODO Fix like below.
-        wordl[-1] = pluralize(word)
+        wordl[-1] = match_case(wordl[-1],pluralize(word))
         return " ".join(wordl)
     # Adapted from https://www.teachstarter.com/au/teaching-resource/rules-for-plurals-s-es-ies-ves/
     
@@ -140,7 +153,7 @@ def make_plural(string):
             else:
                 plural = word+"s"
     # TODO: Just replace the last word
-    wordl[-1]=plural
+    wordl[-1]=match_case(wordl[-1],plural)
     return " ".join(wordl)
 
 def make_past(string):
@@ -161,7 +174,7 @@ def make_past(string):
                 new_word = conjugate(word,'3sgp')
             elif word==pl:
                 new_word = conjugate(word,'ppl')
-            wordl[-1]=new_word
+            wordl[-1]=match_case(wordl[-1],new_word)
             return " ".join(wordl)
         except:
             pass
@@ -176,8 +189,102 @@ def make_past(string):
         new_word = word + word[-1] + "ed"
     else:
         new_word = word+"ed"
-    wordl[-1] = new_word
+    wordl[-1] = match_case(wordl[-1],new_word)
     return " ".join(wordl)
+
+def make_participle(string):
+    wordl = string.split(" ")
+    word = wordl[-1].lower()
+    if word in all_words:
+        try:
+            part = conjugate(word,'part')
+            wordl[-1] = match_case(wordl[-1],part)
+            return " ".join(wordl)
+        except:
+            pass
+    if re.match(r"[^aeiou][aeiou][^aeiouwxy]$",word):
+        # Doesn't work if the stress isn't on the last syllable, but determining stress would be
+        # too much work.
+        new_word = word + word[-1] + "ing"
+    else:
+        new_word = word + "ing"
+    wordl[-1] = match_case(wordl[-1],new_word)
+    return " ".join(wordl)
+
+def make_comparative(string):
+    wordl = string.split(" ")
+    word = wordl[-1].lower()
+    if word in all_words:
+        try:
+            comp = comparative(word)
+            wordl[-1] = match_case(wordl[-1],comp)
+            return " ".join(wordl)
+        except:
+            pass
+    if re.match(r"[^aeiou][aeiou][^aeiouwxy]$",word):
+        # Doesn't work if the stress isn't on the last syllable, but determining stress would be
+        # too much work.
+        new_word = word + word[-1] + "er"
+    else:
+        new_word = word + "er"
+    wordl[-1] = match_case(wordl[-1],new_word)
+    return " ".join(wordl)
+
+def make_superlative(string):
+    wordl = string.split(" ")
+    word = wordl[-1].lower()
+    if word in all_words:
+        try:
+            soup = superlative(word)
+            wordl[-1] = match_case(wordl[-1],soup)
+            return " ".join(wordl)
+        except:
+            pass
+    if re.match(r"[^aeiou][aeiou][^aeiouwxy]$",word):
+        # Doesn't work if the stress isn't on the last syllable, but determining stress would be
+        # too much work.
+        new_word = word + word[-1] + "est"
+    else:
+        new_word = word + "est"
+    wordl[-1] = match_case(wordl[-1],new_word)
+    return " ".join(wordl)
+
+def make_person(string,p):
+    wordl = string.split(" ")
+    word = wordl[-1].lower()
+    if word in all_words:
+        try:
+            res = conjugate(word,p+'sg')
+            wordl[-1] = match_case(wordl[-1],res)
+            return " ".join(wordl)
+        except:
+            pass
+    # No change if not a real word. No guesses for fake words on this one.
+    return string
+
+def apply_commands(commands,val):
+    for command in commands:
+        if command=="cap" and len(val) > 0:
+            val = val[0].upper() + (val[1:] if len(val)>1 else "")
+        elif command=="a":
+            val = a_or_an(val) + " " + val
+        elif command=="s":
+            val = make_plural(val)
+        elif command=="ed":
+            val = make_past(val)
+        elif command=="ing":
+            val = make_participle(val)
+        elif command=="er":
+            val = make_comparative(val)
+        elif command=="est":
+            val = make_superlative(val)
+        elif command=="1p":
+            val = make_person(val,'1')
+        elif command=="2p":
+            val = make_person(val,'2')
+        elif command=="3p":
+            val = make_person(val,'3')
+    return val
 
 rule_re = r"\[[^\[\]]*\]"
 def generate_text(variables={},from_rule='root'):
@@ -198,24 +305,16 @@ def generate_text(variables={},from_rule='root'):
         if len(split_by_equals)==1:
             if match_text in variables:
                 # print("Getting value of variable",match_text)
-                val = variables[match_text]
+                val = apply_commands(commands,variables[match_text])
             else:
                 # print("Generating text for variable",match_text)
-                val = generate_text(variables,match_text)
+                val = apply_commands(commands,generate_text(variables,match_text))
         else:
             # Declare variable
             # print("Declaring variable",split_by_equals,"with value determined by rule",split_by_equals[1])
-            val = generate_text(variables,split_by_equals[1])
+            val = apply_commands(commands,generate_text(variables,split_by_equals[1].split(".")[0]))
             variables[split_by_equals[0]]=val
-        for command in commands:
-            if command=="cap" and len(val) > 0:
-                val = val[0].upper() + (val[1:] if len(val)>1 else "")
-            elif command=="a":
-                val = a_or_an(val) + " " + val
-            elif command=="s":
-                val = make_plural(val)
-            elif command=="ed":
-                val = make_past(val)
+        
         text_value = text_value[:span[0]]+val+text_value[span[1]:]
         match = re.search(rule_re,text_value)
         # print(match)
