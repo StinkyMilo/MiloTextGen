@@ -1,0 +1,3 @@
+﻿root,weight,noun,verb,subject,weight,object,weight,sentence
+[sentence] [sentence],4,women,want,I,2,me,2,[subject.cap] [verb] [object].
+[sentence] [root],1,fish,fear,[noun],1,[noun],1,

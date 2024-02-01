@@ -276,12 +276,13 @@ class Generator:
                 worksheet = workbook[workbook.sheetnames[0]]
             else:
                 worksheet = workbook[worksheet_name]
-            for y in range(1,worksheet.max_row+1):
+            for y in range(1,worksheet.max_column+1):
                 items.append([])
-                for x in range(1,worksheet.max_column+1):
+                for x in range(1,worksheet.max_row+1):
                     cell = worksheet.cell(x,y)
                     # For now, just convert to string then back to int. Not a big deal.
-                    items[-1].append('' if cell.internal_value is None else str(cell.internal_value))
+                    if cell.internal_value is not None:
+                        items[-1].append(str(cell.internal_value))
             self.items = items
         else:
             if extension=="tsv":
@@ -318,7 +319,6 @@ class Generator:
             i+=2
         # print(self.grammar)
 
-    # Not working suddenly! Replacements aren't doing what they should
     def generate(self,variables={},from_rule='root'):
         text_value = weighted_choice(self.grammar[from_rule])
         # print("Initial value:",text_value)
